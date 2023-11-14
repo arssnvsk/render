@@ -23,8 +23,9 @@ function getClientIP(req) {
 }
 
 // Specify the port number for the server to listen on
+const port = process.env.PORT || 3001;
 
 // Start the server and listen on the specified port
-server.listen(443, () => {
-  console.log(`Server listening on port`);
+server.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
