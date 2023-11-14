@@ -1,50 +1,51 @@
-const http = require('http');
-const geoip = require('geoip-lite');
+  const http = require('http');
+  const fs = require('fs')
 
-// Create an HTTP server
-const server = http.createServer((req, res) => {
-  // Get the client's IP address
-  const clientIP = getClientIP(req);
+  // Create an HTTP server
+  const server = http.createServer((req, res) => {
+    // Get the client's IP address
+    const clientIP = getClientIP(req);
+    console.log(clientIP)
+    if (req.method === 'POST') {
+      let body = '';
 
-  // Use geoip-lite to get location information by IP
-  const location = geoip.lookup(clientIP);
+      // Collect data chunks from the request
+      req.on('data', (chunk) => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        // Your logic to handle the POST data
+        console.log('Received POST data:', body);
 
-  // Send an HTML response with the client's IP and location information
-  sendResponse(res, clientIP, location);
-});
+        // Send a response
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('POST request received');
+      });
+    } else {
+      // Send an HTML response with the client's IP
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      fs.readFile('./index.html', (err, html) => {
+        res.end(html);
+      })
+    }
+  });
 
-// Get the client's IP address from the request object
-function getClientIP(req) {
-  const forwardedHeader = req.headers['x-forwarded-for'];
-  if (forwardedHeader) {
-    // If the request went through a proxy, use the forwarded IP
-    return forwardedHeader.split(',')[0];
-  } else {
-    // Otherwise, use the remote address from the request object
-    return req.connection.remoteAddress;
+  // Get the client's IP address from the request object
+  function getClientIP(req) {
+    const forwardedHeader = req.headers['x-forwarded-for'];
+    if (forwardedHeader) {
+      // If the request went through a proxy, use the forwarded IP
+      return forwardedHeader.split(',')[0];
+    } else {
+      // Otherwise, use the remote address from the request object
+      return req.connection.remoteAddress;
+    }
   }
-}
 
-// Send an HTML response with the client's IP and location information
-function sendResponse(res, clientIP, location) {
-  res.writeHead(200, { 'Content-Type': 'text/html' });
+  // Specify the port number for the server to listen on
+  const port = process.env.PORT || 3001;
 
-  let responseHTML = `<h1>Hello from Node.js!</h1>`;
-  responseHTML += `<p>Your IP address is: ${clientIP}</p>`;
-
-  if (location) {
-    responseHTML += `<p>Your location is: ${JSON.stringify(location)}</p>`;
-  } else {
-    responseHTML += `<p>Location information is not available.</p>`;
-  }
-
-  res.end(responseHTML);
-}
-
-// Specify the port number for the server to listen on
-const port = process.env.PORT || 3001;
-
-// Start the server and listen on the specified port
-server.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+  // Start the server and listen on the specified port
+  server.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
